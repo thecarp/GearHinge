@@ -1,13 +1,19 @@
 use <PolyGear/PolyGear.scad>
+include <PolyGear/PolyGearBasics.scad>
 use <PolyGear/shortcuts.scad>
 
-width = 8;
+chamfer=30;
+axis_angle=0;
+helix_angle = [ for (x=linspace(-1,1,11)) exp(-abs(x))*10*sign(x) ];
+
+//helix_angle = constant(axis_angle/2);
+//width = 100;
+width=18;
 N = 9;
 // Force same number of teeth
 N1=N;
 N2=N;
-axis_angle = 0;
-Module=2;
+Module=1.45;
 
 ShaftD=4.5;
 MeshD=Module*(N1+N2)/2;
@@ -22,46 +28,44 @@ SideW=tol+BackW;
 
 echo("Reference Diameter (MeshD): ", MeshD);
 //rot=360/N1*$t;
-//rot=90-90*$t;
-rot=80;
+// rot=90-90*$t;
+rot=90;
 //axis_angle = -50;
 
 
-meshed(rot=rot);
-//meshed(box=false);
-
-//gear_sector();
+//meshed(rot=rot);
+#meshed(rot=rot, box=true, box_top=true);
 
 module gear_sector() {
 	CyS(r=MeshD, h=width, w1=215, w2=20);
 	CyS(r=MeshD/2 - 2, h=width, w1=20, w2=90);
 }
 
-module meshed(box=true, rot=0) {
+module meshed(box=true, box_top=true, rot=0) {
 	//offex=tol;
 	offex=0;
 	color("blue") translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
 	color ("red") translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear();
 	if (box) {
-		color("green") box(full = true, top=false, tol=tol, ShaftFN=21);
+		color("green") box(full = true, top=box_top, tol=tol, ShaftFN=21);
 	}
 }
 
 module gear_track_block() {
 		difference() {
-			CyS(r=MeshD/2 - Module/2, h=width, w1=260, w2=270);
+			CyS(r=MeshD/2 + Module/2, h=width/2, w1=245, w2=250);
 			CyS(r=ShaftD+1, h=width, w1=259, w2=271);
 		}	
 }
 
 module blue_gear() {
-	 render() intersection() {
-		spur_gear(n=N1, w=width, m=Module,helix_angle=constant(axis_angle/2));
+	intersection() {
+		spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle );
 			difference() {	
 				gear_sector();
 			
 				// Shaft Hole
-				cylinder(d=ShaftD, h=12, center=true, $fn=21);
+				cylinder(d=ShaftD, h=width+2, center=true, $fn=21);
 	
 				// Block limit - back
 				translate([-BackW+2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width], center=true);
@@ -73,32 +77,52 @@ module blue_gear() {
 		gear_track_block();
 		
 		// leaf arm
-		translate([MeshD/2 - 2*Module,7,0]) cube([3,12,width+1], center=true);
+		//translate([MeshD/2 - 2*Module,11,0]) cube([4,20,width+1], center=true);
+		translate([MeshD/2 - 2*Module -.75,12.5,0]) difference() {
+				cube([4,20,width+1], center=true);
+				rotate([0,90,0]) {
+					for (i= [-1, 1]) {
+						translate([i*(width/2-5.25),5,-1.6]) 
+							cylinder(d=5.5, h=1, $fn=9, center=true);
+						translate([i*(width/2-5.25),5,0]) 
+							cylinder(d=4.75, h=20, $fn=9, center=true);
+					}
+				}
+		}
 } 
 
-module red_gear()
-{
-	render() { 
-		difference() {
-			union() {
-			CyS(r=MeshD/2 - 2, h=width, w1=90, w2=160);
-			intersection() {
-				spur_gear(n=N2, w=width, m=Module, helix_angle=constant(axis_angle/2));
-				CyS(r=MeshD, h=width, w1=150, w2=-30);
+module leaf_arm() {
+	difference() {
+			cube([4,20,width+1], center=true);
+			rotate([0,90,0]) {
+				for (i = [-1, 1]) {
+					translate([i*(width/2-5.25),5,1.5]) cylinder(d=5.5, h=1, $fn=9, center=true);
+					translate([i*(width/2-5.25),5,0]) cylinder(d=4.75, h=20, $fn=9, center=true);
+				}
 			}
-			
-			// leaf arm
-			translate([-MeshD/2 + 2*Module,7,0]) cube([3,12,width+1], center=true);
-	
-			
 		}
-		// Shaft Hole
-		cylinder(d=ShaftD, h=12, center=true, $fn=21);
-		// Block limit -front
-			translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
-		// Block limit
-		translate([BackW-2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width+1], center=true);
+}
+
+module red_gear()
+{ 
+	difference() {
+		union() {
+		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=160);
+		intersection() {
+			spur_gear(n=N2, w=width, m=Module, chamfer=30, helix_angle=-helix_angle);
+			CyS(r=MeshD, h=width, w1=150, w2=-30);
 		}
+		
+		// leaf arm
+		translate([-MeshD/2 + 2*Module+.75,12.5,0]) leaf_arm();
+		
+	}
+	// Shaft Hole
+	cylinder(d=ShaftD, h=width+2, center=true, $fn=21);
+	// Block limit -front
+		translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
+	// Block limit
+	translate([BackW-2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width+1], center=true);
 	}
 }
 
@@ -123,9 +147,12 @@ module box(
 	translate([MeshD/2,0]) {
 		// Shaft
 		cylinder(d=d-2*tol, h=width+2,$fn=ShaftFN, center=true);
-		// Bottom
-		translate([0,0,-width/2 - WallD/2 - tol])cylinder(d=d+2*tol, h=WallD,$fn=ShaftFN, center=true);
-		// Front Wall
+		// Shaft Bottom/top
+		for (s = [-1,1]) {
+			translate([0,0,s*(width/2 + WallD/2 + 1.5*tol)])
+				cylinder(d=d+3*tol, h=WallD+tol,$fn=ShaftFN, center=true);
+		}
+
 		translate([BackW/2 - SideW +1,0]) cube([SideW+tol,WallD,width+1+2*tol], center=true);
 		// Side Wall
 		translate([SideW,-Swing/2]) cube([WallD,Swing+WallD,width+1+2*tol], center=true);
@@ -140,7 +167,6 @@ module box(
 	translate([BackW/2,-(Swing)/2,-width/2 - WallD/2 - 2*tol]) 
 	difference() {
 		cube([BackW,Swing+WallD,WallD], center=true);
-		translate([-Swing/2,Swing/4,0]) cube([BackW/1.25, Swing/3,4],center=true);
 	}
 
 }
