@@ -36,6 +36,7 @@ rot=0;
 
 $fa = ($preview) ? 12 : .01;
 $fs = ($preview) ?  2 : .01;
+$incolor = false;
 
 gear_hinge(rot=rot, box=true, box_top=true);
 //translate([50,0,0]) gear_hinge(rot=rot, box=false, box_top=true);
@@ -46,13 +47,23 @@ module gear_sector() {
 	CyS(r=MeshD/2 - 2, h=width, w1=20, w2=90);
 }
 
-module gear_hinge(box=true, box_top=true, rot=0) {
+module gear_hinge(
+	box=true,
+	box_top=true,
+	box_color="green",
+	left_gear_color="blue",
+	right_gear_color="red",
+	rot=0) {
 	//offex=tol;
+	bc  = $incolor ? box_color : undef;
+	lgc = $incolor ? left_gear_color : undef;
+	rgc = $incolor ? right_gear_color : undef;
+	
 	offex=0;
-	color("blue") translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
-	color ("red") translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear();
+	color(lgc) translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
+	color (rgc) translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear();
 	if (box) {
-		color("green") box(full = true, top=box_top, tol=tol);
+		color(bgc) box(full = true, top=box_top, tol=tol);
 	}
 }
 
@@ -64,23 +75,24 @@ module gear_track_block() {
 }
 
 module blue_gear() {
-	render() intersection() {
-		spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle );
-			difference() {	
-				gear_sector();
+	render() { 
+		intersection() {
+			spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle );
+				difference() {	
+					gear_sector();
 			
-				// Shaft Hole
-				cylinder(d=ShaftD, h=width+2, center=true);
+					// Shaft Hole
+					cylinder(d=ShaftD, h=width+2, center=true);
 	
-				// Block limit - back
-				translate([-BackW+2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width], center=true);
-				// Block limit - front
-				translate([0,0,-width/2]) cube([1,MeshD/2,width]);
+					// Block limit - back
+					translate([-BackW+2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width], center=true);
+					// Block limit - front
+					translate([0,0,-width/2]) cube([1,MeshD/2,width]);
+				}
 			}
+			// Rear Block
+			gear_track_block();
 		}
-		// Rear Block
-		gear_track_block();
-		
 		// leaf arm
 		//translate([MeshD/2 - 2*Module,11,0]) cube([4,20,width+1], center=true);
 		translate([MeshD/2 - 2*Module - .80,12.5,0]) rotate([0,0,0]) leaf_arm();
