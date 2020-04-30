@@ -31,9 +31,12 @@ echo("Reference Diameter (MeshD): ", MeshD);
 // rot=90-90*$t;
 rot=0;
 //axis_angle = -50;
-
-
+	
 //meshed(rot=rot);
+
+$fa = ($preview) ? 12 : .01;
+$fs = ($preview) ?  2 : .01;
+
 gear_hinge(rot=rot, box=true, box_top=true);
 //translate([50,0,0]) gear_hinge(rot=rot, box=false, box_top=true);
 
@@ -49,7 +52,7 @@ module gear_hinge(box=true, box_top=true, rot=0) {
 	color("blue") translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
 	color ("red") translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear();
 	if (box) {
-		color("green") box(full = true, top=box_top, tol=tol, ShaftFN=21);
+		color("green") box(full = true, top=box_top, tol=tol);
 	}
 }
 
@@ -67,7 +70,7 @@ module blue_gear() {
 				gear_sector();
 			
 				// Shaft Hole
-				cylinder(d=ShaftD, h=width+2, center=true, $fn=21);
+				cylinder(d=ShaftD, h=width+2, center=true);
 	
 				// Block limit - back
 				translate([-BackW+2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width], center=true);
@@ -98,7 +101,7 @@ module red_gear()
 		
 	}
 	// Shaft Hole
-	cylinder(d=ShaftD, h=width+2, center=true, $fn=21);
+	cylinder(d=ShaftD, h=width+2, center=true);
 	// Block limit -front
 		translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
 	// Block limit
@@ -111,8 +114,8 @@ module leaf_arm() {
 			cube([4,20,width+1], center=true);
 			rotate([0,90,0]) {
 				for (i = [-1, 1]) {
-					translate([i*(width/2-5.25),5,1.5]) cylinder(d=5.5, h=1, $fn=9, center=true);
-					translate([i*(width/2-5.25),5,0]) cylinder(d=4.75, h=20, $fn=9, center=true);
+					translate([i*(width/2-5.25),5,1.5]) cylinder(d=5.5, h=1, center=true);
+					translate([i*(width/2-5.25),5,0]) cylinder(d=4.75, h=20, center=true);
 				}
 			}
 		}
@@ -122,27 +125,27 @@ module box(
 	d=ShaftD,
 	tol=.25,
 	top=true,
-	ShaftFN=$fn,
 	MeshD=MeshD,
 	Module=Module,
 	SwingAdd=1,
 	WallD=1.5,
 	full=true)
 {
+
 	Swing = MeshD/2 + Module + SwingAdd;
 	BackW=WallD/2 + Swing+Module+1;
 	SideW=tol -1 + BackW-MeshD/2;
 	if (full == true) {
-		mirror([1,0,0]) box(d=d, tol=tol, ShaftFN=ShaftFN, top=top, full=false);
+		mirror([1,0,0]) box(d=d, tol=tol, top=top, full=false);
 	}
 	
 	translate([MeshD/2,0]) {
 		// Shaft
-		cylinder(d=d-2*tol, h=width+2,$fn=ShaftFN, center=true);
+		cylinder(d=d-2*tol, h=width+2, center=true);
 		// Shaft Bottom/top
 		for (s = [-1,1]) {
 			translate([0,0,s*(width/2 + WallD/2 + 1.5*tol)])
-				cylinder(d=d+3*tol, h=WallD+tol,$fn=ShaftFN, center=true);
+				cylinder(d=d+3*tol, h=WallD+tol, center=true);
 		}
 
 		translate([BackW/2 - SideW +1,0]) cube([SideW+tol,WallD,width+1+2*tol], center=true);
