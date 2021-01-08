@@ -29,7 +29,7 @@ SideW=tol+BackW;
 echo("Reference Diameter (MeshD): ", MeshD);
 //rot=360/N1*$t;
 // rot=90-90*$t;
-rot=0;
+rot=45;
 //axis_angle = -50;
 	
 //meshed(rot=rot);
@@ -38,7 +38,7 @@ $fa = ($preview) ? 12 : .01;
 $fs = ($preview) ?  2 : .01;
 $incolor = false;
 
-gear_hinge(rot=rot, box=true, box_top=true);
+gear_hinge(rot=rot, box=false, rounded_case=true, box_top=true);
 //translate([50,0,0]) gear_hinge(rot=rot, box=false, box_top=true);
 
 
@@ -49,6 +49,7 @@ module gear_sector() {
 
 module gear_hinge(
 	box=true,
+	rounded_case=false,
 	box_top=true,
 	box_color="green",
 	left_gear_color="blue",
@@ -63,14 +64,16 @@ module gear_hinge(
 	color(lgc) translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
 	color (rgc) translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear();
 	if (box) {
-		color(bgc) box(full = true, top=box_top, tol=tol);
+		color(bc) box(full = true, top=box_top, tol=tol);
+	} else if (rounded_case) {
+		round_case(full=true, tol=tol);
 	}
 }
 
 module gear_track_block() {
 		difference() {
 			CyS(r=MeshD/2 + Module/2, h=width/2, w1=245, w2=250);
-			CyS(r=ShaftD+1, h=width, w1=259, w2=271);
+			CyS(r=ShaftD+1, h=width, w1=244, w2=271);
 		}	
 }
 
@@ -115,7 +118,7 @@ module red_gear()
 	// Shaft Hole
 	cylinder(d=ShaftD, h=width+2, center=true);
 	// Block limit -front
-		translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
+	translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
 	// Block limit
 	translate([BackW-2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width+1], center=true);
 	}
@@ -131,6 +134,57 @@ module leaf_arm() {
 				}
 			}
 		}
+}
+
+module round_case(
+	d=ShaftD,
+	tol=.25,
+	top=true,
+	MeshD=MeshD,
+	Module=Module,
+	SwingAdd=1,
+	WallD=1.5,
+	full=true)
+{
+
+	Swing = MeshD/2 + Module + SwingAdd;
+	BackW=WallD/2 + Swing+Module+1;
+	SideW=tol -1 + BackW-MeshD/2;
+	
+	difference() {
+		intersection() {
+			hull() {
+				for (x = [-MeshD/2, MeshD/2] )
+					translate([x,0])	
+						cylinder(d=18.5, h=width+4, center=true);
+			}
+			translate([-15,-11.3,-15]) cube([30,12,30]);
+		}
+		hull() {
+			for (xi = [-1, 1] )
+				translate([xi*MeshD/2,0]) difference() {	
+					cylinder(d=16.5, h=width+2, center=true);
+					cylinder(d=d-2*tol, h=width+2, center=true);
+				}
+		}
+//		translate([-7,5,-10]) cube([14,5,20]);
+
+
+	}
+	
+	for (xi = [-1, 1]) {
+		translate([xi*MeshD/2,0]) {
+		// Shaft
+		cylinder(d=d-2*tol, h=width+2, center=true);
+		// Shaft Bottom/top
+		for (s = [-1,1]) {
+			translate([0,0,s*(width/2 + WallD/2 + 1.5*tol)])
+				cylinder(d=d+3*tol, h=WallD+tol, center=true);
+		}
+
+		translate([xi*(BackW/2 - SideW +4),-.05]) cube([SideW+1+tol,WallD,width+3+2*tol], center=true);
+		}	
+	}
 }
 
 module box(
