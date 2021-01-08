@@ -30,7 +30,7 @@ echo("Reference Diameter (MeshD): ", MeshD);
 //rot=360/N1*$t;
 // rot=90-90*$t;
 rot=45;
-rot=0;
+//rot=0;
 //axis_angle = -50;
 	
 //meshed(rot=rot);
@@ -188,8 +188,8 @@ module round_case(
 			echo("full is true. Not splitting.");
 		} else {
 			echo("full is false. Splitting.");
-
-			color("purple") translate([0,0,11]) cube([50,50,20], center=true);
+			color($incolor ? "purple" : undef)
+				translate([0,0,11]) cube([50,50,20], center=true);
 		}
 	}
 	
