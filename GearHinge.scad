@@ -30,6 +30,7 @@ echo("Reference Diameter (MeshD): ", MeshD);
 //rot=360/N1*$t;
 // rot=90-90*$t;
 rot=45;
+rot=0;
 //axis_angle = -50;
 	
 //meshed(rot=rot);
@@ -38,7 +39,7 @@ $fa = ($preview) ? 12 : .01;
 $fs = ($preview) ?  2 : .01;
 $incolor = false;
 
-gear_hinge(rot=rot, box=false, rounded_case=true, box_top=true);
+gear_hinge(rot=rot, box=false, rounded_case=true);
 //translate([50,0,0]) gear_hinge(rot=rot, box=false, box_top=true);
 
 
@@ -98,7 +99,7 @@ module blue_gear() {
 		}
 		// leaf arm
 		//translate([MeshD/2 - 2*Module,11,0]) cube([4,20,width+1], center=true);
-		translate([MeshD/2 - 2*Module - .80,12.5,0]) rotate([0,0,0]) leaf_arm();
+		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true);
 } 
 
 module red_gear()
@@ -112,25 +113,32 @@ module red_gear()
 		}
 		
 		// leaf arm
-		translate([-MeshD/2 + 2*Module + .80,12.5,0]) leaf_arm();
+		translate([-2,11.6,0]) leaf_arm(left=false);
 		
 	}
 	// Shaft Hole
 	cylinder(d=ShaftD, h=width+2, center=true);
 	// Block limit -front
-	translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
+	//translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
 	// Block limit
 	translate([BackW-2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width+1], center=true);
 	}
 }
 
-module leaf_arm() {
+module leaf_arm(left=true) {
+	dx = 7.51;
 	difference() {
-			cube([4,20,width+1], center=true);
-			rotate([0,90,0]) {
-				for (i = [-1, 1]) {
-					translate([i*(width/2-5.25),5,1.5]) cylinder(d=5.5, h=1, center=true);
-					translate([i*(width/2-5.25),5,0]) cylinder(d=4.75, h=20, center=true);
+			//cube([4,20,width+1], center=true);
+			translate([0,-9.5+dx/2,0]) cube([4,dx,width], center=true);
+			rot = left ? 270 : 90;
+			rotate([0,rot,0]) {
+				for (i = [-1, 1]) { // M2.5 insert
+					$fn = 11;
+					translate([i*(width/2-5.25),5,1.6])
+						cylinder(d=5, h=1, center=true); // rim
+					translate([i*(width/2-5.25),5,0])
+						cylinder(d=3.8, h=20, center=true); // body
+					
 				}
 			}
 		}
@@ -158,18 +166,15 @@ module round_case(
 					translate([x,0])	
 						cylinder(d=18.5, h=width+4, center=true);
 			}
-			translate([-15,-11.3,-15]) cube([30,12,30]);
+			translate([-15,-12,-15]) cube([30,12,30]);
 		}
 		hull() {
 			for (xi = [-1, 1] )
 				translate([xi*MeshD/2,0]) difference() {	
-					cylinder(d=16.5, h=width+2, center=true);
-					cylinder(d=d-2*tol, h=width+2, center=true);
+					cylinder(d=16.5, h=width+2*tol, center=true);
+					cylinder(d=d-2*tol, h=width+2*tol, center=true);
 				}
 		}
-//		translate([-7,5,-10]) cube([14,5,20]);
-
-
 	}
 	
 	for (xi = [-1, 1]) {
@@ -182,7 +187,7 @@ module round_case(
 				cylinder(d=d+3*tol, h=WallD+tol, center=true);
 		}
 
-		translate([xi*(BackW/2 - SideW +4),-.05]) cube([SideW+1+tol,WallD,width+3+2*tol], center=true);
+		translate([xi*(BackW/2 - SideW +4),-WallD/2]) cube([SideW+1+tol,WallD,width+3+2*tol], center=true);
 		}	
 	}
 }
