@@ -144,6 +144,14 @@ module leaf_arm(left=true) {
 		}
 }
 
+module round_case_inner(meshd, shaftd, width, tol) {
+	for (xi = [-1, 1] )
+		translate([xi*meshd/2,0]) difference() {	
+			cylinder(d=16.5, h=width+2*tol, center=true);
+			cylinder(d=shaftd-2*tol, h=width+2*tol, center=true);
+	}
+}
+
 module round_case(
 	d=ShaftD,
 	tol=.25,
@@ -152,6 +160,7 @@ module round_case(
 	Module=Module,
 	SwingAdd=1,
 	WallD=1.5,
+	spine=true,
 	full=true)
 {
 
@@ -168,12 +177,19 @@ module round_case(
 			}
 			translate([-15,-12,-15]) cube([30,12,30]);
 		}
-		hull() {
-			for (xi = [-1, 1] )
-				translate([xi*MeshD/2,0]) difference() {	
-					cylinder(d=16.5, h=width+2*tol, center=true);
-					cylinder(d=d-2*tol, h=width+2*tol, center=true);
-				}
+		if (spine)
+			round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
+		else {
+			hull() round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
+		}
+		//color("purple") translate([0,0,11]) cube([50,50,20], center=true);
+
+		if (full) {
+			echo("full is true. Not splitting.");
+		} else {
+			echo("full is false. Splitting.");
+
+			color("purple") translate([0,0,11]) cube([50,50,20], center=true);
 		}
 	}
 	
