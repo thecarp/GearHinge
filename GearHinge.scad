@@ -1,3 +1,9 @@
+/* GearHinge.scad - Parametric geared hinge for FDM manufacturing
+   Copyright (c) 2021 Stephen J. Carpenter <sjc@carpanet.net>
+   
+   License: MIT. See License.txt for details.
+*/
+
 use <PolyGear/PolyGear.scad>
 include <PolyGear/PolyGearBasics.scad>
 use <PolyGear/shortcuts.scad>
@@ -35,9 +41,10 @@ SideW=tol+BackW;
 
 echo("Reference Diameter (MeshD): ", MeshD);
 //rot=360/N1*$t;
-//rot=90-90*$t;
-rot=45;
-//rot=90;
+//rot=90*$t;
+//rot=20*$t +75;
+rot=0;
+//rot=00;
 //axis_angle = -50;
 	
 //meshed(rot=rot);
@@ -72,20 +79,28 @@ module gear_hinge(
 	}
 }
 
+// gear_track_block - generates a bit of material to jam the gears at full
+//         extention to ensure that the gears don't pop out. This is only 
+//         added to one gear.
 module gear_track_block() {
 		difference() {
-			CyS(r=MeshD/2 + Module/2, h=width/2, w1=245, w2=250);
+			//CyS(r=MeshD/2 + Module/2, h=width/2, w1=245, w2=250);
+			CyS(r=MeshD - 4*Module, h=width/2, w1=245, w2=251);
 			CyS(r=ShaftD+1, h=width, w1=244, w2=271);
 		}	
 }
 
+
+// gear_sector - Generates the shape of gear to be kept.
+//         currently only used on the blue_gear. 
+//         xxx: red_gear maybe should be refactored to use it?
 module gear_sector(meshd, width) {
 	CyS(r=meshd, h=width, w1=215, w2=00);
 	CyS(r=meshd/2 - 2, h=width, w1=-1, w2=90);
 }
 
+// blue_gear - Gear on the left with the track block built into its back side.
 module blue_gear() {
-	render() { 
 		intersection() {
 			spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle );
 				difference() {	
@@ -94,23 +109,27 @@ module blue_gear() {
 					// Shaft Hole
 					cylinder(d=ShaftD, h=width+2, center=true);
 	
-					// Block limit - back
+					// Block limit - side
 					translate([-BackW+2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width], center=true);
+					// Block Limit - back
+
+					translate([-MeshD,-1.5+tol, -(width+1)/2])
+						cube([MeshD,1.5+tol,width+1]);
+
 					// Block limit - front
 					translate([0,0,-width/2]) cube([1,MeshD/2,width]);
 				}
 			}
 			// Rear Block
 			gear_track_block();
-		}
 		// leaf arm
-		//translate([MeshD/2 - 2*Module,11,0]) cube([4,20,width+1], center=true);
 		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, h=width+4);
 } 
 
+// Red Gear - Gear on the right.
 module red_gear()
 { 
-	render() difference() {
+	difference() {
 		union() {
 		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=190);
 		intersection() {
@@ -124,10 +143,11 @@ module red_gear()
 	}
 	// Shaft Hole
 	cylinder(d=ShaftD, h=width+2, center=true);
-	// Block limit -front
-	//translate([-Module/2,1,-width/2]) cube([Module,MeshD/2,width]);
-	// Block limit
+	// Block limit - side
 	translate([BackW-2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width+1], center=true);
+	// Block limit - front
+	translate([0,-1.5+tol, -(width+1)/2]) cube([MeshD,1.5+tol,width+1]);
+
 	}
 }
 
@@ -159,6 +179,8 @@ module round_case_inner(meshd, shaftd, width, tol) {
 	}
 }
 
+// round_case - generates the back shell of the hinge, which includes the axis 
+//        posts of the hinges.
 module round_case(
 	d=ShaftD,
 	tol=.25,
@@ -166,14 +188,14 @@ module round_case(
 	MeshD=MeshD,
 	Module=Module,
 	SwingAdd=1,
-	WallD=1.5,
-	spine=true,
+	WallD=1.2,
+	spine=false,
 	full=true)
 {
 
 	Swing = MeshD/2 + Module + SwingAdd;
 	BackW=WallD/2 + Swing+Module+1;
-	SideW=tol -1 + BackW-MeshD/2;
+	SideW=tol + BackW-MeshD/2;
 	
 	difference() {
 		intersection() {
@@ -189,7 +211,6 @@ module round_case(
 		else {
 			hull() round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
 		}
-		//color("purple") translate([0,0,11]) cube([50,50,20], center=true);
 
 		if (full) {
 			echo("full is true. Not splitting.");
@@ -210,7 +231,8 @@ module round_case(
 				cylinder(d=d+3*tol, h=WallD+tol, center=true);
 		}
 
-		translate([xi*(BackW/2 - SideW +4),-WallD/2]) cube([SideW+1+tol,WallD,width+3+2*tol], center=true);
+		translate([xi*(SideW/2+2*tol+Module/2),-WallD/2])
+			cube([SideW+2*tol+Module+1,WallD,width+4], center=true);
 		}	
 	}
 }
