@@ -21,11 +21,12 @@ helix_angle = [ for (x=linspace(-1,1,helix_steps)) exp(-abs(x))*10*sign(x) ];
 
 //helix_angle = constant(axis_angle/2);
 //width = 10;
-width=10;
-N = 9;
+width=10; // width of the actual gears.
+N = 9;    // Number of gear teeth.
 // Force same number of teeth
 N1=N;
 N2=N;
+
 Module=1.45;
 
 ShaftD=4.5;
@@ -40,12 +41,7 @@ BackW=Swing+Module;
 SideW=tol+BackW;
 
 echo("Reference Diameter (MeshD): ", MeshD);
-//rot=360/N1*$t;
-//rot=90*$t;
-//rot=20*$t +75;
-rot=0;
-//rot=00;
-//axis_angle = -50;
+rot=90*$t;
 	
 //meshed(rot=rot);
 
