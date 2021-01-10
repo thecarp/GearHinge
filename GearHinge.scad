@@ -4,11 +4,18 @@ use <PolyGear/shortcuts.scad>
 
 chamfer=30;
 axis_angle=0;
-helix_angle = [ for (x=linspace(-1,1,11)) exp(-abs(x))*10*sign(x) ];
+//helix_angle = [ for (x=linspace(-1,1,11)) exp(-abs(x))*10*sign(x) ];
+helix_turns = 3;
+helix_steps = $preview ? 7 : 11;
+
+
+helix_angle = [ for (x=linspace(-1,1,helix_steps)) exp(-abs(x))*10*sign(x) ];
+//helix_angle = [ for (x=linspace(-helix_turns,helix_turns,helix_steps)) exp(-abs(x))*10*sign(x) ];
+
 
 //helix_angle = constant(axis_angle/2);
-//width = 100;
-width=18;
+//width = 10;
+width=10;
 N = 9;
 // Force same number of teeth
 N1=N;
@@ -28,25 +35,19 @@ SideW=tol+BackW;
 
 echo("Reference Diameter (MeshD): ", MeshD);
 //rot=360/N1*$t;
-// rot=90-90*$t;
+//rot=90-90*$t;
 rot=45;
-//rot=0;
+//rot=90;
 //axis_angle = -50;
 	
 //meshed(rot=rot);
 
 $fa = ($preview) ? 12 : .01;
 $fs = ($preview) ?  2 : .01;
-$incolor = false;
+$incolor = true;
 
 gear_hinge(rot=rot, box=false, rounded_case=true);
 //translate([50,0,0]) gear_hinge(rot=rot, box=false, box_top=true);
-
-
-module gear_sector() {
-	CyS(r=MeshD, h=width, w1=215, w2=20);
-	CyS(r=MeshD/2 - 2, h=width, w1=20, w2=90);
-}
 
 module gear_hinge(
 	box=true,
@@ -78,12 +79,17 @@ module gear_track_block() {
 		}	
 }
 
+module gear_sector(meshd, width) {
+	CyS(r=meshd, h=width, w1=215, w2=00);
+	CyS(r=meshd/2 - 2, h=width, w1=-1, w2=90);
+}
+
 module blue_gear() {
 	render() { 
 		intersection() {
 			spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle );
 				difference() {	
-					gear_sector();
+					gear_sector(meshd=MeshD, width=width);
 			
 					// Shaft Hole
 					cylinder(d=ShaftD, h=width+2, center=true);
@@ -99,21 +105,21 @@ module blue_gear() {
 		}
 		// leaf arm
 		//translate([MeshD/2 - 2*Module,11,0]) cube([4,20,width+1], center=true);
-		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true);
+		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, h=width+4);
 } 
 
 module red_gear()
 { 
 	render() difference() {
 		union() {
-		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=160);
+		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=190);
 		intersection() {
 			spur_gear(n=N2, w=width, m=Module, chamfer=30, helix_angle=-helix_angle);
-			CyS(r=MeshD, h=width, w1=150, w2=-30);
+			CyS(r=MeshD, h=width, w1=180, w2=-30);
 		}
 		
 		// leaf arm
-		translate([-2,11.6,0]) leaf_arm(left=false);
+		translate([-2,11.6,0]) leaf_arm(left=false, h=width+4);
 		
 	}
 	// Shaft Hole
@@ -125,7 +131,7 @@ module red_gear()
 	}
 }
 
-module leaf_arm(left=true) {
+module leaf_arm(left=true, h, angle=false) {
 	dx = 7.51;
 	difference() {
 			//cube([4,20,width+1], center=true);
@@ -142,6 +148,7 @@ module leaf_arm(left=true) {
 				}
 			}
 		}
+		cube([4,10,h], center=true);
 }
 
 module round_case_inner(meshd, shaftd, width, tol) {
@@ -172,10 +179,10 @@ module round_case(
 		intersection() {
 			hull() {
 				for (x = [-MeshD/2, MeshD/2] )
-					translate([x,0])	
+					translate([x,0])
 						cylinder(d=18.5, h=width+4, center=true);
 			}
-			translate([-15,-12,-15]) cube([30,12,30]);
+			translate([-15,-12,-(width/2 + 3)]) cube([30,12,width+6]);
 		}
 		if (spine)
 			round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
@@ -208,6 +215,10 @@ module round_case(
 	}
 }
 
+
+// Simple Square Box
+// Lots of wasted space
+// this was v1. Its ugly. Use rounded case.
 module box(
 	d=ShaftD,
 	tol=.25,
