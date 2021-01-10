@@ -6,6 +6,11 @@ of another project, but stands on its own as a part that could be re-used.
 It is designed to be printed in place and without support materials. Gears
 should be rotates into the case (rot = 0) for printing.
 
+## Requirements
+
+This model uses the PolyGear library https://github.com/dpellegr/PolyGear
+in order to generate gears and slice them up.
+
 ## usage
 
 ```openscad
