@@ -29,7 +29,7 @@ N2=N;
 
 Module=1.45;
 
-ShaftD=4.5;
+ShaftD=4.2;
 MeshD=Module*(N1+N2)/2;
 
 SwingAdd = 1;
@@ -41,7 +41,8 @@ BackW=Swing+Module;
 SideW=tol+BackW;
 
 echo("Reference Diameter (MeshD): ", MeshD);
-rot=90*$t;
+//rot=90*$t;
+rot=1;
 
 //meshed(rot=rot);
 
@@ -78,11 +79,12 @@ module gear_hinge(
 // gear_track_block - generates a bit of material to jam the gears at full
 //         extention to ensure that the gears don't pop out. This is only 
 //         added to one gear.
+
 module gear_track_block() {
 		difference() {
 			//CyS(r=MeshD/2 + Module/2, h=width/2, w1=245, w2=250);
-			CyS(r=MeshD - 4*Module, h=width/2, w1=245, w2=251);
-			CyS(r=ShaftD+1, h=width, w1=244, w2=271);
+			CyS(r=MeshD/2, h=width, w1=275, w2=310);
+			CyS(r=ShaftD+.5, h=width, w1=275, w2=310);
 		}	
 }
 
@@ -98,7 +100,7 @@ module gear_sector(meshd, width) {
 // blue_gear - Gear on the left with the track block built into its back side.
 module blue_gear() {
 		intersection() {
-			spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle );
+			spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle, add=-tol/2 );
 				difference() {	
 					gear_sector(meshd=MeshD, width=width);
 			
@@ -116,8 +118,6 @@ module blue_gear() {
 					translate([0,0,-width/2]) cube([1,MeshD/2,width]);
 				}
 			}
-			// Rear Block
-			gear_track_block();
 		// leaf arm
 		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, h=width+3.2);
 } 
@@ -129,13 +129,16 @@ module red_gear()
 		union() {
 		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=190);
 		intersection() {
-			spur_gear(n=N2, w=width, m=Module, chamfer=30, helix_angle=-helix_angle);
+			spur_gear(n=N2, w=width, m=Module, chamfer=30, helix_angle=-helix_angle, add=-tol/2);
 			CyS(r=MeshD, h=width, w1=180, w2=-30);
+
+
 		}
 		
 		// leaf arm
 		translate([-2,11.6,0]) leaf_arm(left=false, h=width+3.2);
-		
+				// Rear Block
+		gear_track_block();
 	}
 	// Shaft Hole
 	cylinder(d=ShaftD, h=width+2, center=true);
@@ -145,6 +148,7 @@ module red_gear()
 	translate([0,-1.5+tol, -(width+1)/2]) cube([MeshD,1.5+tol,width+1]);
 
 	}
+
 }
 
 module leaf_arm(left=true, h, angle=false) {

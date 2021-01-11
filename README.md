@@ -4,7 +4,10 @@ GearHinge is an openscad model of a geared hinge. This was developed as part
 of another project, but stands on its own as a part that could be re-used.
 
 It is designed to be printed in place and without support materials. Gears
-should be rotates into the case (rot = 0) for printing.
+should be rotated into the case for printing.
+
+Printing is very sensitive to options, and slicing should be inspected to
+ensure parts have not been connected internally. 
 
 ## Requirements
 
