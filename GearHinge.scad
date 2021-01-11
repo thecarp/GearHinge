@@ -172,6 +172,7 @@ module round_case_inner(meshd, shaftd, width, tol) {
 		translate([xi*meshd/2,0]) difference() {	
 			cylinder(d=16.5, h=width+2*tol, center=true);
 			cylinder(d=shaftd-2*tol, h=width+2*tol, center=true);
+			translate([xi*12-8,-12,-(width/2 + 3)]) cube([16,12,width+6]);
 	}
 }
 
@@ -200,7 +201,7 @@ module round_case(
 					translate([x,0])
 						cylinder(d=18.5, h=width+4, center=true);
 			}
-			translate([-15,-12,-(width/2 + 3)]) cube([30,12,width+6]);
+			translate([-12,-12,-(width/2 + 3)]) cube([24,12,width+6]);
 		}
 		if (spine)
 			round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
@@ -227,8 +228,8 @@ module round_case(
 				cylinder(d=d+3*tol, h=WallD+tol, center=true);
 		}
 
-		translate([xi*(SideW/2+2*tol+Module/2),-WallD/2])
-			cube([SideW+2*tol+Module+1,WallD,width+4], center=true);
+		translate([xi*(2*tol+Module/2),-WallD/2])
+			cube([3+2*tol+Module+1,WallD,width+4], center=true);
 		}	
 	}
 }
