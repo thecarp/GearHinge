@@ -8,7 +8,7 @@ use <PolyGear/PolyGear.scad>
 include <PolyGear/PolyGearBasics.scad>
 use <PolyGear/shortcuts.scad>
 
-chamfer=30;
+chamfer=40;
 axis_angle=0;
 //helix_angle = [ for (x=linspace(-1,1,11)) exp(-abs(x))*10*sign(x) ];
 helix_turns = 3;
@@ -21,7 +21,7 @@ helix_angle = [ for (x=linspace(-1,1,helix_steps)) exp(-abs(x))*10*sign(x) ];
 
 //helix_angle = constant(axis_angle/2);
 //width = 10;
-width=10; // width of the actual gears.
+width=18; // width of the actual gears.
 N = 9;    // Number of gear teeth.
 // Force same number of teeth
 N1=N;
@@ -42,7 +42,7 @@ SideW=tol+BackW;
 
 echo("Reference Diameter (MeshD): ", MeshD);
 rot=90*$t;
-	
+
 //meshed(rot=rot);
 
 $fa = ($preview) ? 12 : .01;
@@ -119,7 +119,7 @@ module blue_gear() {
 			// Rear Block
 			gear_track_block();
 		// leaf arm
-		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, h=width+4);
+		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, h=width+3.2);
 } 
 
 // Red Gear - Gear on the right.
@@ -134,7 +134,7 @@ module red_gear()
 		}
 		
 		// leaf arm
-		translate([-2,11.6,0]) leaf_arm(left=false, h=width+4);
+		translate([-2,11.6,0]) leaf_arm(left=false, h=width+3.2);
 		
 	}
 	// Shaft Hole
@@ -164,7 +164,7 @@ module leaf_arm(left=true, h, angle=false) {
 				}
 			}
 		}
-		cube([4,10,h], center=true);
+		translate([0,-4+tol,0]) cube([4,10,h], center=true);
 }
 
 module round_case_inner(meshd, shaftd, width, tol) {
@@ -199,7 +199,7 @@ module round_case(
 			hull() {
 				for (x = [-MeshD/2, MeshD/2] )
 					translate([x,0])
-						cylinder(d=18.5, h=width+4, center=true);
+						cylinder(d=18.5, h=width+3.2, center=true);
 			}
 			translate([-12,-12,-(width/2 + 3)]) cube([24,12,width+6]);
 		}
@@ -225,12 +225,13 @@ module round_case(
 		// Shaft Bottom/top
 		for (s = [-1,1]) {
 			translate([0,0,s*(width/2 + WallD/2 + 1.5*tol)])
-				cylinder(d=d+3*tol, h=WallD+tol, center=true);
+				cylinder(d=d+4*tol, h=WallD+tol, center=true);
 		}
 
-		translate([xi*(2*tol+Module/2),-WallD/2])
-			cube([3+2*tol+Module+1,WallD,width+4], center=true);
-		}	
+		translate([xi*2.5,-WallD/2,0])
+			cube([3+2*tol+Module+1,WallD,width+3.2], center=true);
+		}
+		translate([xi*11.5-.5,-MeshD/2,-(width + 3.2)/2]) cube([1,MeshD/2,width+3.2]);
 	}
 }
 
