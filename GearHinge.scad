@@ -46,8 +46,8 @@ rot=1;
 
 //meshed(rot=rot);
 
-$fa = ($preview) ? 12 : .01;
-$fs = ($preview) ?  2 : .01;
+$fa = ($preview) ? 17 : .1;
+$fs = ($preview) ?  3 : .1;
 $incolor = true;
 
 gear_hinge(rot=rot, box=false, rounded_case=true);
