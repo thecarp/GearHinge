@@ -19,28 +19,11 @@ helix_angle = [ for (x=linspace(-1,1,helix_steps)) exp(-abs(x))*10*sign(x) ];
 //helix_angle = [ for (x=linspace(-helix_turns,helix_turns,helix_steps)) exp(-abs(x))*10*sign(x) ];
 
 
-//helix_angle = constant(axis_angle/2);
-//width = 10;
-width=18; // width of the actual gears.
-N = 9;    // Number of gear teeth.
-// Force same number of teeth
-N1=N;
-N2=N;
+//width=18; // width of the actual gears.
 
-Module=1.45;
-
-ShaftD=4.2;
-MeshD=Module*(N1+N2)/2;
 
 SwingAdd = 1;
-Swing = MeshD/2 + Module + SwingAdd;
 
-// RefD = M*N ; Default M=1
-tol=.2;
-BackW=Swing+Module;
-SideW=tol+BackW;
-
-echo("Reference Diameter (MeshD): ", MeshD);
 //rot=90*$t;
 rot=3;
 
@@ -62,10 +45,11 @@ module plate_full_open(rot=90) {
 }
 
 module plate_print(rot=90-8, door=false) {
-	gear_hinge(rot=rot, box=false, rounded_case=true, door=door);
+	gear_hinge(width=18,rot=rot, box=false, rounded_case=true, door=door);
 }
 
 module gear_hinge(
+	width = 18,
 	box=true,
 	rounded_case=false,
 	box_top=true,
@@ -73,19 +57,26 @@ module gear_hinge(
 	left_gear_color="blue",
 	right_gear_color="red",
 	door = false,
+	mod = 1.45,
+	nteeth = 9,
+	shaftd=4.2,
+	tol = .2,
 	rot=0) {
 	//offex=tol;
 	bc  = $incolor ? box_color : undef;
 	lgc = $incolor ? left_gear_color : undef;
 	rgc = $incolor ? right_gear_color : undef;
+
+	MeshD=mod*nteeth; // N1 == N2
+	echo("Reference Diameter (MeshD): ", MeshD);
 	
 	offex=0;
-	color(lgc) translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
-	color (rgc) translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear(door=door);
+	color(lgc) translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear(nteeth, mod, width, shaftd, tol);
+	color (rgc) translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear(nteeth, mod, width, shaftd, tol, door=door);
 	if (box) {
 		color(bc) box(full = true, top=box_top, tol=tol);
 	} else if (rounded_case) {
-		round_case(full=true, tol=tol);
+		round_case(d=shaftd, mod=mod, nteeth=nteeth, width=width, full=true, tol=tol);
 	}
 }
 
@@ -93,10 +84,10 @@ module gear_hinge(
 //         extention to ensure that the gears don't pop out. This is only 
 //         added to one gear.
 
-module gear_track_block() {
+module gear_track_block(meshd, shaftd, width, w1=275, w2=310) {
 		difference() {
-			CyS(r=MeshD/2 +.5, h=width/2, w1=275, w2=310);
-			CyS(r=ShaftD+.5, h=width/2, w1=275, w2=310);
+			CyS(r=meshd/2 +.5, h=width/2, w1=w1, w2=w2);
+			CyS(r=shaftd+.5, h=width/2, w1=w1, w2=w2);
 		}	
 }
 
@@ -110,39 +101,48 @@ module gear_sector(meshd, width) {
 }
 
 // blue_gear - Gear on the left with the track block built into its back side.
-module blue_gear() {
-		intersection() {
-			spur_gear(n=N1, w=width, m=Module, chamfer=chamfer, chamfer_shift=-2,helix_angle = helix_angle, add=-tol/4 );
-				difference() {	
-					gear_sector(meshd=MeshD, width=width);
-			
-					// Shaft Hole
-					cylinder(d=ShaftD, h=width+2, center=true);
-	
-					// Block limit - side
-					translate([-BackW+2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width], center=true);
-					// Block Limit - back
+module blue_gear(n, mod, width, shaftd, tol, swingadd = 1, shift=-2) {
+	meshd=mod*n;
+	swing = meshd/2 + mod + swingadd;
+	backw=swing+mod;
+	sidew=tol+backw;
 
-					translate([-MeshD,-1.5+tol, -(width+1)/2])
-						cube([MeshD,1.5+tol,width+1]);
+	intersection() {
+		spur_gear(n, w=width, m=mod, chamfer=chamfer, chamfer_shift=shift,helix_angle = helix_angle, add=-tol/4 );
+			difference() {	
+				gear_sector(meshd, width=width);
 
-					// Block limit - front
-					translate([0,0,-width/2]) cube([1,MeshD/2,width]);
-				}
+				// Shaft Hole
+				cylinder(d=shaftd, h=width+2, center=true);
+
+				// Block limit - side
+				translate([-backw+2*tol,-meshd/2,0]) cube([meshd,meshd,width], center=true);
+				// Block Limit - back
+
+				translate([-meshd,-1.5+tol, -(width+1)/2])
+					cube([meshd,1.5+tol,width+1]);
+
+				// Block limit - front
+				translate([0,0,-width/2]) cube([1,meshd/2,width]);
 			}
-		// leaf arm
-		translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, h=width+3.2);
+		}
+	// leaf arm
+	translate([2,11.6,0]) rotate([0,0,0]) leaf_arm(left=true, width=width, floord=3.2, tol=tol);
 } 
 
 // Red Gear - Gear on the right.
-module red_gear(door=false)
+module red_gear(n, mod, width, shaftd, tol, swingadd=1, shift=-2, door=false)
 { 
+	meshd=mod*n;
+	swing = meshd/2 + mod + swingadd;
+	backw=swing+mod;
+	sidew=tol+backw;
 	difference() {
 		union() {
-		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=190);
+		CyS(r=meshd/2 - 2, h=width, w1=90, w2=190);
 		intersection() {
-			spur_gear(n=N2, w=width, m=Module, chamfer=chamfer, chamfer_shift=-2, helix_angle=-helix_angle, add=-tol/4);
-			CyS(r=MeshD, h=width, w1=181, w2=-30);
+			spur_gear(n=n, w=width, m=mod, chamfer=chamfer, chamfer_shift=shift, helix_angle=-helix_angle, add=-tol/4);
+			CyS(r=meshd, h=width, w1=181, w2=-30);
 
 
 		}
@@ -163,24 +163,25 @@ module red_gear(door=false)
 						}
 					}
 				}
-			else leaf_arm(left=false, h=width+3.2);
+			else leaf_arm(left=false, width=width, floord=3.2, tol=tol);
 			}
 		// Rear Block
-		gear_track_block();
+		gear_track_block(meshd, shaftd, width);
 	}
 	// Shaft Hole
-	cylinder(d=ShaftD, h=width+2, center=true);
+	cylinder(d=shaftd, h=width+2, center=true);
 	// Block limit - side
-	translate([BackW-2*tol,-MeshD/2,0]) cube([MeshD,MeshD,width+1], center=true);
+	translate([backw-2*tol,-meshd/2,0]) cube([meshd,meshd,width+1], center=true);
 	// Block limit - front
-	translate([0,-1.5+tol, -(width+1)/2]) cube([MeshD,1.5+tol,width+1]);
+	translate([0,-1.5+tol, -(width+1)/2]) cube([meshd,1.5+tol,width+1]);
 
 	}
 
 }
 
-module leaf_arm(left=true, h, l, angle=false) {
+module leaf_arm(left=true, width, floord ,l, tol, angle=false) {
 	dx = 3;
+	h = width + floord;
 	difference() {
 			//cube([4,20,width+1], center=true);
 			translate([0,-9.5+dx/2,0]) cube([4,dx,width], center=true);
@@ -215,34 +216,36 @@ module round_case_inner(meshd, shaftd, width, tol) {
 // round_case - generates the back shell of the hinge, which includes the axis 
 //        posts of the hinges.
 module round_case(
-	d=ShaftD,
+	d,
+	width,
 	tol=.25,
 	top=true,
-	MeshD=MeshD,
-	Module=Module,
-	SwingAdd=1,
-	WallD=1.2,
+	nteeth,
+	mod,
+	swingadd=1,
+	walld=1.2,
 	spine=false,
 	full=true)
 {
 
-	Swing = MeshD/2 + Module + SwingAdd;
-	BackW=WallD/2 + Swing+Module+1;
-	SideW=tol + BackW-MeshD/2;
+	meshd=mod*nteeth;
+	swing = meshd/2 + mod + swingadd;
+	backw=walld/2 + swing+mod+1;
+	SideW=tol + backw-meshd/2;
 	
 	difference() {
 		intersection() {
 			hull() {
-				for (x = [-MeshD/2, MeshD/2] )
+				for (x = [-meshd/2, meshd/2] )
 					translate([x,0])
 						cylinder(d=18.5, h=width+3.2, center=true);
 			}
 			translate([-12,-12,-(width/2 + 3)]) cube([24,12,width+6]);
 		}
 		if (spine)
-			round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
+			round_case_inner(meshd=meshd, shaftd=d, width=width, tol=tol);
 		else {
-			hull() round_case_inner(meshd=MeshD, shaftd=d, width=width, tol=tol);
+			hull() round_case_inner(meshd=meshd, shaftd=d, width=width, tol=tol);
 		}
 
 		if (full) {
@@ -255,19 +258,19 @@ module round_case(
 	}
 	
 	for (xi = [-1, 1]) {
-		translate([xi*MeshD/2,0]) {
+		translate([xi*meshd/2,0]) {
 		// Shaft
 		cylinder(d=d-2*tol, h=width+2, center=true);
 		// Shaft Bottom/top
 		for (s = [-1,1]) {
-			translate([0,0,s*(width/2 + WallD/2 + 1.5*tol)])
-				cylinder(d=d+4*tol, h=WallD+tol, center=true);
+			translate([0,0,s*(width/2 + walld/2 + 1.5*tol)])
+				cylinder(d=d+4*tol, h=walld+tol, center=true);
 		}
 
-		translate([xi*2.5,-WallD/2,0])
-			cube([3+2*tol+Module+1,WallD,width+3.2], center=true);
+		translate([xi*2.5,-walld/2,0])
+			cube([3+2*tol+mod+1,walld,width+3.2], center=true);
 		}
-		translate([xi*11.5-.5,-MeshD/2,-(width + 3.2)/2]) cube([1,MeshD/2,width+3.2]);
+		translate([xi*11.5-.5,-meshd/2,-(width + 3.2)/2]) cube([1,meshd/2,width+3.2]);
 	}
 }
 
