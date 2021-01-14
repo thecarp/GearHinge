@@ -8,7 +8,7 @@ use <PolyGear/PolyGear.scad>
 include <PolyGear/PolyGearBasics.scad>
 use <PolyGear/shortcuts.scad>
 
-chamfer=40;
+chamfer=30;
 axis_angle=0;
 //helix_angle = [ for (x=linspace(-1,1,11)) exp(-abs(x))*10*sign(x) ];
 helix_turns = 3;
@@ -50,14 +50,19 @@ $fa = ($preview) ? 17 : .1;
 $fs = ($preview) ?  3 : .1;
 $incolor = true;
 
-plate_hinge();
+plate_print();
+//plate_full_open();
+
 //gear_hinge(rot=rot, box=false, rounded_case=true);
 //translate([50,0,0]) gear_hinge(rot=rot, box=false, box_top=true);
 
-module plate_hinge() {
-	rot = 90 - 5;
+module plate_full_open(rot=90) {
+	rot = 90;
 	gear_hinge(rot=rot, box=false, rounded_case=true);
-	
+}
+
+module plate_print(rot=90-8, door=false) {
+	gear_hinge(rot=rot, box=false, rounded_case=true, door=door);
 }
 
 module gear_hinge(
@@ -67,6 +72,7 @@ module gear_hinge(
 	box_color="green",
 	left_gear_color="blue",
 	right_gear_color="red",
+	door = false,
 	rot=0) {
 	//offex=tol;
 	bc  = $incolor ? box_color : undef;
@@ -75,7 +81,7 @@ module gear_hinge(
 	
 	offex=0;
 	color(lgc) translate([-MeshD/2 - offex,0]) rotate([0,0,rot]) blue_gear();
-	color (rgc) translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear();
+	color (rgc) translate([offex + MeshD/2,0]) rotate([0,0,-rot]) red_gear(door=door);
 	if (box) {
 		color(bc) box(full = true, top=box_top, tol=tol);
 	} else if (rounded_case) {
@@ -89,8 +95,8 @@ module gear_hinge(
 
 module gear_track_block() {
 		difference() {
-			CyS(r=MeshD/2 +.5, h=width, w1=275, w2=310);
-			CyS(r=ShaftD+.5, h=width, w1=275, w2=310);
+			CyS(r=MeshD/2 +.5, h=width/2, w1=275, w2=310);
+			CyS(r=ShaftD+.5, h=width/2, w1=275, w2=310);
 		}	
 }
 
@@ -106,7 +112,7 @@ module gear_sector(meshd, width) {
 // blue_gear - Gear on the left with the track block built into its back side.
 module blue_gear() {
 		intersection() {
-			spur_gear(n=N1, w=width, m=Module, chamfer=30, helix_angle = helix_angle, add=-tol/4 );
+			spur_gear(n=N1, w=width, m=Module, chamfer=chamfer, chamfer_shift=-2,helix_angle = helix_angle, add=-tol/4 );
 				difference() {	
 					gear_sector(meshd=MeshD, width=width);
 			
@@ -129,21 +135,36 @@ module blue_gear() {
 } 
 
 // Red Gear - Gear on the right.
-module red_gear()
+module red_gear(door=false)
 { 
 	difference() {
 		union() {
 		CyS(r=MeshD/2 - 2, h=width, w1=90, w2=190);
 		intersection() {
-			spur_gear(n=N2, w=width, m=Module, chamfer=30, helix_angle=-helix_angle, add=-tol/4);
+			spur_gear(n=N2, w=width, m=Module, chamfer=chamfer, chamfer_shift=-2, helix_angle=-helix_angle, add=-tol/4);
 			CyS(r=MeshD, h=width, w1=181, w2=-30);
 
 
 		}
 		
 		// leaf arm
-		translate([-2,11.6,0]) leaf_arm(left=false, h=width+3.2) 
-			translate([0,-4+tol,0]) cube([4,10,width+3.2], center=true);
+		translate([-2,11.6]) {
+			if (door)  leaf_arm(left=false, h=width+3.2)
+				translate([0,-4+tol])  { 
+					translate([0,-1.6]) cube([4,5+2,width+3.2], center=true);
+					difference() {
+						translate([7,7]) cube([18,14,width+3.2], center=true);
+						translate([10,7]) cube([14,6.5,width+4], center=true);
+						translate([10,15]) rotate([90,0,0]) {
+							cylinder(d=2.1, h=10);
+							translate([0,0,5]) cylinder(d=2.8, h=12);
+							translate([0,0,12]) cylinder(d=4, h=5);
+
+						}
+					}
+				}
+			else leaf_arm(left=false, h=width+3.2);
+			}
 		// Rear Block
 		gear_track_block();
 	}
