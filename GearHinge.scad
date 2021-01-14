@@ -50,8 +50,8 @@ module plate_print(rot=90-8, door=false) {
 
 module gear_hinge(
 	width = 18,
-	box=true,
-	rounded_case=false,
+	box=false,
+	rounded_case=true,
 	box_top=true,
 	box_color="green",
 	left_gear_color="blue",
