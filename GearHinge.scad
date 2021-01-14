@@ -149,7 +149,7 @@ module red_gear(n, mod, width, shaftd, tol, swingadd=1, shift=-2, door=false)
 		
 		// leaf arm
 		translate([-2,11.6]) {
-			if (door)  leaf_arm(left=false, h=width+3.2)
+			if (door)  leaf_arm(left=false, width=width, floord=3.2, tol=tol)
 				translate([0,-4+tol])  { 
 					translate([0,-1.6]) cube([4,5+2,width+3.2], center=true);
 					difference() {
